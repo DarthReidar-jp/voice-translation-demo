@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import AudioRecorder from '../components/AudioRecorder';
 import LanguageSelector from '../components/LanguageSelector';
 import TranslationResult from '../components/TranslationResult';
