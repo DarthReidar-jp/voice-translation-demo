@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import openai from '@/lib/openai';
+import { transcribeAudio } from '@/lib/transcriptionService';
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,23 +16,11 @@ export async function POST(request: NextRequest) {
 
     console.log('Received audio file:', audioFile.name, audioFile.type, audioFile.size);
     
-    // OpenAIのTranscription APIでオーディオをテキストに変換
-    // language パラメータを完全に省略して自動検出
-    const transcription = await openai.audio.transcriptions.create({
-      file: audioFile,
-      model: 'gpt-4o-transcribe'
-    });
-
+    const result = await transcribeAudio(audioFile);
     console.log('Transcription completed successfully');
-    console.log('Transcription text:', transcription.text);
+    console.log('Transcription text:', result.text);
     
-    // デフォルト言語を設定
-    const detectedLanguage = 'auto';
-    
-    return NextResponse.json({
-      text: transcription.text,
-      detectedLanguage: detectedLanguage
-    });
+    return NextResponse.json(result);
   } catch (error) {
     console.error('Transcription error:', error);
     return NextResponse.json(
