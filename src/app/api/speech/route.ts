@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import openai from '@/lib/openai';
+import { generateSpeech } from '@/lib/speechService';
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,19 +14,8 @@ export async function POST(request: NextRequest) {
 
     console.log('TTS Request:', { text: text.substring(0, 50) + '...', voice });
 
-    // OpenAI Text-to-Speech APIを使用して音声合成
-    const mp3 = await openai.audio.speech.create({
-      model: 'gpt-4o-mini-tts',
-      voice: voice,
-      input: text,
-      response_format: 'mp3',
-    });
-
-    console.log('TTS completed successfully');
-
-    // 音声データをバッファに変換
-    const buffer = Buffer.from(await mp3.arrayBuffer());
-    console.log('Audio buffer created, size:', buffer.length);
+    const buffer = await generateSpeech(text, voice);
+    console.log('TTS completed successfully, Audio buffer created, size:', buffer.length);
 
     // 音声データを含むレスポンスを返す
     return new NextResponse(buffer, {
