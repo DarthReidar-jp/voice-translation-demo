@@ -1,10 +1,10 @@
 "use client";
 import React, { useEffect, useState } from 'react';
-import AudioRecorder from './components/AudioRecorder';
-import LanguageSelector from './components/LanguageSelector';
-import TranslationResult from './components/TranslationResult';
-import Header from './components/Header';
-import Footer from './components/Footer';
+import AudioRecorder from '../components/AudioRecorder';
+import LanguageSelector from '../components/LanguageSelector';
+import TranslationResult from '../components/TranslationResult';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
 import useTranslation from './hooks/useTranslation';
 import useAudio from './hooks/useAudio';
 
