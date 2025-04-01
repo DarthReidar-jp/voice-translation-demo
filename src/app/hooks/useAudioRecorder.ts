@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { convertToMp3 } from '../../lib/ffmpeg';
 
 interface UseAudioRecorderProps {
@@ -141,6 +141,9 @@ export const useAudioRecorder = ({
     }
   }, [addDebugMessage, isRecording, onRecordingStop]);
 
+  /**
+   * リソースをクリーンアップする関数
+   */
   const cleanup = useCallback(() => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       mediaRecorderRef.current.stop();
@@ -153,6 +156,10 @@ export const useAudioRecorder = ({
       URL.revokeObjectURL(audioURL);
     }
   }, [audioURL]);
+
+  useEffect(() => {
+    return cleanup;
+  }, [cleanup]);
 
   return {
     isRecording,

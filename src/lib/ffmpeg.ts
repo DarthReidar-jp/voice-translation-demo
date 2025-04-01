@@ -10,7 +10,7 @@ let ffmpegInstance: FFmpeg | null = null;
  * デバッグログを出力する関数
  * 開発環境でのみログを出力する
  */
-const logDebug = (message: string, ...args: any[]) => {
+const logDebug = (message: string, ...args: unknown[]) => {
   if (process.env.NODE_ENV === 'development') {
     console.log(message, ...args);
   }
