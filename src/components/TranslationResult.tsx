@@ -1,6 +1,10 @@
 "use client";
 import React, { useState } from 'react';
+import { getLanguageName } from '@/lib/languageUtils';
 
+/**
+ * 翻訳結果表示コンポーネントのプロパティ
+ */
 interface TranslationResultProps {
   originalText: string;
   translatedText: string | null;
@@ -8,10 +12,11 @@ interface TranslationResultProps {
   targetLanguage: string;
   isLoading: boolean;
   error: string | null;
-  onPlayAudio: () => void;
-  isPlayingAudio: boolean;
 }
 
+/**
+ * 翻訳結果を表示するコンポーネント
+ */
 const TranslationResult: React.FC<TranslationResultProps> = ({
   originalText,
   translatedText,
@@ -22,6 +27,9 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
 }) => {
   const [copied, setCopied] = useState(false);
 
+  /**
+   * テキストをクリップボードにコピーする
+   */
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text).then(() => {
       setCopied(true);
@@ -29,26 +37,9 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
     });
   };
 
-  const getLanguageName = (code: string): string => {
-    const languageMap: { [key: string]: string } = {
-      'en': '英語',
-      'ja': '日本語',
-      'zh': '中国語',
-      'ko': '韓国語',
-      'vi': 'ベトナム語',
-      'fr': 'フランス語',
-      'de': 'ドイツ語',
-      'es': 'スペイン語',
-      'pt': 'ポルトガル語',
-      'ru': 'ロシア語',
-      'ar': 'アラビア語',
-      'hi': 'ヒンディー語',
-      'th': 'タイ語',
-    };
-    
-    return languageMap[code] || code;
-  };
-
+  /**
+   * 翻訳結果が表示できない場合はnullを返す
+   */
   if (!originalText && !isLoading) {
     return null;
   }
