@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import openai from '@/lib/openai';
+import fs from 'fs';
+import path from 'path';
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,13 +35,20 @@ export async function POST(request: NextRequest) {
     const sourceLangName = sourceLanguage ? (languageNameMap[sourceLanguage] || sourceLanguage) : 'the detected language';
     const targetLangName = languageNameMap[targetLanguage] || targetLanguage;
 
-    // OpenAI ChatGPT APIを使用してテキスト翻訳
+    // プロンプトを外部ファイルから読み込む
+    const promptsPath = path.join(process.cwd(), 'src/app/api/translate/prompts.json');
+    const promptsData = fs.readFileSync(promptsPath, 'utf-8');
+    const prompts = JSON.parse(promptsData);
+    const translationPrompt = prompts.translationPrompt
+      .replace('{sourceLangName}', sourceLangName)
+      .replace('{targetLangName}', targetLangName);
+
     const response = await openai.chat.completions.create({
       model: 'gpt-4o',
       messages: [
         {
           role: 'system',
-          content: `You are a professional translator. Translate the following text from ${sourceLangName} to ${targetLangName}. Provide only the translated text without any additional explanations or notes.`
+          content: translationPrompt
         },
         {
           role: 'user',
