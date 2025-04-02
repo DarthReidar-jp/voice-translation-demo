@@ -8,6 +8,9 @@ import Footer from '../components/Footer';
 import useTranslation from './hooks/useTranslation';
 import useAudio from './hooks/useAudio';
 
+/**
+ * メインページコンポーネント
+ */
 const HomePage = () => {
   const [sourceLanguage, setSourceLanguage] = useState<string>('');
   const [targetLanguage, setTargetLanguage] = useState<string>('ja');
@@ -17,7 +20,9 @@ const HomePage = () => {
   const { translatedText, isTranslating, translationError, translateText } = useTranslation();
   const { isPlayingAudio, handlePlayAudioWithText, audioRef } = useAudio();
 
-  // 音声認識完了時のハンドラー
+  /**
+   * 音声認識完了時のハンドラー
+   */
   const handleTranscriptionComplete = async (text: string, detectedLanguage: string) => {
     setOriginalText(text);
     setSourceLanguage(detectedLanguage);
@@ -27,9 +32,10 @@ const HomePage = () => {
     }
   };
 
-
-  // TranslationResultに手動で音声再生ボタンを追加
-  const renderPlayButton = () => {
+  /**
+   * 音声再生ボタンコンポーネント
+   */
+  const AudioPlayButton = () => {
     if (!translatedText || isTranslating) return null;
     
     return (
@@ -76,10 +82,8 @@ const HomePage = () => {
               targetLanguage={targetLanguage}
               isLoading={isTranslating}
               error={translationError}
-              onPlayAudio={() => translatedText && handlePlayAudioWithText(translatedText, targetLanguage)}
-              isPlayingAudio={isPlayingAudio}
             />
-            {renderPlayButton()}
+            <AudioPlayButton />
           </div>
         )}
 

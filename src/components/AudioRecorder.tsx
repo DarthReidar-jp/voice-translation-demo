@@ -1,6 +1,6 @@
 "use client";
-import React, { useState, useRef, useEffect } from 'react';
-import { convertToMp3 } from '@/lib/ffmpeg';
+import React, { useEffect } from 'react';
+import { useAudioRecorder } from '@/app/hooks/useAudioRecorder';
 
 interface AudioRecorderProps {
   onTranscriptionComplete: (text: string, detectedLanguage: string) => void;
@@ -8,154 +8,32 @@ interface AudioRecorderProps {
   onRecordingStop: () => void;
 }
 
+/**
+ * 音声録音コンポーネント
+ * 録音の開始・停止と音声認識を行う
+ */
 const AudioRecorder: React.FC<AudioRecorderProps> = ({
   onTranscriptionComplete,
   onRecordingStart,
   onRecordingStop
 }) => {
-  const [isRecording, setIsRecording] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [audioURL, setAudioURL] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [debug, setDebug] = useState<string[]>([]);
-  
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
-
-  const addDebugMessage = (message: string) => {
-    console.log(message);
-    setDebug(prev => [...prev, message]);
-  };
-
-  // 録音開始ハンドラー
-  const handleStartRecording = async () => {
-    try {
-      setError(null);
-      setDebug([]);
-      audioChunksRef.current = [];
-      addDebugMessage("録音を開始します...");
-      
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error('お使いのブラウザは音声録音をサポートしていません');
-      }
-
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      addDebugMessage("マイクのアクセス許可を取得しました");
-      
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-      addDebugMessage(`MediaRecorderが作成されました (mimeType: ${mediaRecorder.mimeType})`);
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-          addDebugMessage(`音声データを受信しました (サイズ: ${event.data.size} bytes)`);
-        }
-      };
-
-      mediaRecorder.onstop = async () => {
-        try {
-          setIsProcessing(true);
-          addDebugMessage("録音が停止しました。音声処理を開始します...");
-          
-          // 録音データをBlobに結合
-          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-          addDebugMessage(`音声Blobが作成されました (サイズ: ${audioBlob.size} bytes, タイプ: ${audioBlob.type})`);
-          
-          const url = URL.createObjectURL(audioBlob);
-          setAudioURL(url);
-          
-          // MP3に変換
-          addDebugMessage("MP3への変換を開始します...");
-          let mp3Blob;
-          try {
-            mp3Blob = await convertToMp3(audioBlob);
-            addDebugMessage(`MP3への変換が完了しました (サイズ: ${mp3Blob.size} bytes)`);
-          } catch (error) {
-            addDebugMessage(`MP3変換エラー: ${error instanceof Error ? error.message : String(error)}`);
-            throw error;
-          }
-          
-          // FormDataを作成
-          const formData = new FormData();
-          formData.append('file', mp3Blob, 'audio.mp3');
-          addDebugMessage("FormDataを作成し、APIリクエストを準備しました");
-          
-          // 音声認識APIにリクエスト
-          addDebugMessage("音声認識APIにリクエストを送信します...");
-          try {
-            const transcriptionResponse = await fetch('/api/transcribe', {
-              method: 'POST',
-              body: formData,
-            });
-            
-            addDebugMessage(`APIレスポンス: ${transcriptionResponse.status} ${transcriptionResponse.statusText}`);
-            
-            if (!transcriptionResponse.ok) {
-              const errorText = await transcriptionResponse.text();
-              addDebugMessage(`APIエラー詳細: ${errorText}`);
-              throw new Error(`音声認識に失敗しました (${transcriptionResponse.status}): ${errorText}`);
-            }
-            
-            const transcriptionData = await transcriptionResponse.json();
-            addDebugMessage(`認識結果を受信しました: "${transcriptionData.text.substring(0, 30)}..."`);
-            
-            // 親コンポーネントに認識結果を通知
-            onTranscriptionComplete(
-              transcriptionData.text, 
-              transcriptionData.detectedLanguage || 'auto'
-            );
-          } catch (error) {
-            addDebugMessage(`APIリクエストエラー: ${error instanceof Error ? error.message : String(error)}`);
-            throw error;
-          }
-        } catch (error) {
-          console.error('録音処理エラー:', error);
-          setError(error instanceof Error ? error.message : '音声処理中にエラーが発生しました');
-          addDebugMessage(`処理エラー: ${error instanceof Error ? error.message : '音声処理中にエラーが発生しました'}`);
-        } finally {
-          setIsProcessing(false);
-        }
-      };
-
-      mediaRecorder.start();
-      setIsRecording(true);
-      onRecordingStart();
-      addDebugMessage("録音が開始されました");
-    } catch (error) {
-      console.error('録音開始エラー:', error);
-      setError(error instanceof Error ? error.message : '録音の開始に失敗しました');
-      addDebugMessage(`録音開始エラー: ${error instanceof Error ? error.message : '録音の開始に失敗しました'}`);
-    }
-  };
-
-  // 録音停止ハンドラー
-  const handleStopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      addDebugMessage("録音を停止中...");
-      mediaRecorderRef.current.stop();
-      
-      // すべてのトラックを停止
-      if (mediaRecorderRef.current.stream) {
-        mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
-        addDebugMessage("メディアトラックが停止しました");
-      }
-      
-      setIsRecording(false);
-      onRecordingStop();
-    }
-  };
+  const {
+    isRecording,
+    isProcessing,
+    audioURL,
+    error,
+    debugMessages,
+    handleStartRecording,
+    handleStopRecording
+  } = useAudioRecorder({
+    onTranscriptionComplete,
+    onRecordingStart,
+    onRecordingStop
+  });
 
   // コンポーネントのアンマウント時にリソースをクリーンアップ
   useEffect(() => {
     return () => {
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-        mediaRecorderRef.current.stop();
-        if (mediaRecorderRef.current.stream) {
-          mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
-        }
-      }
-      
       // 作成したURLオブジェクトを開放
       if (audioURL) {
         URL.revokeObjectURL(audioURL);
@@ -204,10 +82,10 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
         </div>
       )}
       
-      {debug.length > 0 && (
+      {debugMessages.length > 0 && (
         <div className="mt-4 p-3 bg-gray-100 text-gray-700 rounded-md w-full text-xs font-mono overflow-auto max-h-40">
           <p className="font-medium mb-1">デバッグ情報:</p>
-          {debug.map((msg, i) => (
+          {debugMessages.map((msg: string, i: number) => (
             <div key={i} className="py-1 border-t border-gray-200 first:border-t-0">
               {msg}
             </div>
