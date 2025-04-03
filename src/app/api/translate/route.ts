@@ -28,7 +28,8 @@ export async function POST(request: NextRequest) {
       'ru': 'Russian',
       'ar': 'Arabic',
       'hi': 'Hindi',
-      'th': 'Thai'
+      'th': 'Thai',
+      'id': 'Indonesian'
     };
 
     // 言語名を取得（コードがマップにない場合はコードをそのまま使用）

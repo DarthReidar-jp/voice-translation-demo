@@ -15,6 +15,7 @@ export const languageMap: { [key: string]: string } = {
   'ar': 'アラビア語',
   'hi': 'ヒンディー語',
   'th': 'タイ語',
+  'id': 'インドネシア語',
 };
 
 /**

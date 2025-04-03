@@ -20,6 +20,7 @@ const languages: Language[] = [
   { code: 'ar', name: 'アラビア語 (Arabic)' },
   { code: 'hi', name: 'ヒンディー語 (Hindi)' },
   { code: 'th', name: 'タイ語 (Thai)' },
+  { code: 'id', name: 'インドネシア語 (Indonesian)' },
 ];
 
 interface LanguageSelectorProps {
